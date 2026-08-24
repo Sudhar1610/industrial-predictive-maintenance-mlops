@@ -1,0 +1,7 @@
+# Structured logging configuration (loguru). Stage-independent.
+
+level: "INFO" # DEBUG | INFO | WARNING | ERROR
+sink: "stdout" # stdout | path to a log file, e.g. "logs/pdm.log"
+rotation: "50 MB"
+retention: "14 days"
+serialize: false # true -> emit JSON lines (useful for log shipping in Stage 3)

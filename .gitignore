@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# Env / secrets
+.env
+*.pem
+
+# Data (DVC-tracked, not git-tracked)
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# MLflow / registry
+mlflow/
+artifacts/
+mlruns/
+
+# DVC cache
+.dvc/cache
+.dvc/tmp
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Conda-pack bundle output
+bundle/
+*.tar.gz
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Logs
+logs/
+*.log
