@@ -8,14 +8,17 @@ module docstring convention described in the project README.
 
 from __future__ import annotations
 
+import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from loguru import logger
 
 from pdm.config import settings
 from pdm.data.factory import get_datasource
 from pdm.models.base import Model
+from pdm.monitoring.prediction_logger import PredictionLogger
+from pdm.monitoring.prometheus_metrics import CONTENT_TYPE_LATEST, record_prediction, render_latest
 from pdm.serving.inference import build_model_input
 from pdm.serving.model_loader import load_production_model
 from pdm.serving.schemas import (
@@ -33,6 +36,7 @@ class _AppState:
 
     model: Model | None = None
     model_backend: str | None = None
+    prediction_logger: PredictionLogger = PredictionLogger()
 
 
 state = _AppState()
@@ -70,8 +74,11 @@ def _predict_one(request: PredictRequest) -> PredictionResponse:
     except Exception as exc:  # noqa: BLE001 - malformed input, not a server error
         raise HTTPException(status_code=422, detail=f"Could not build features: {exc}") from exc
 
+    start = time.perf_counter()
     result = model.predict(X)
-    return PredictionResponse(
+    latency = time.perf_counter() - start
+
+    response = PredictionResponse(
         unit_id=request.unit_id,
         cycle=latest_cycle,
         failure_probability=float(result.failure_probability[0]),
@@ -79,6 +86,16 @@ def _predict_one(request: PredictRequest) -> PredictionResponse:
         remaining_useful_life=float(result.remaining_useful_life[0]),
         model_backend=state.model_backend or "unknown",
     )
+
+    record_prediction(
+        model_backend=response.model_backend,
+        will_fail=response.will_fail,
+        failure_probability=response.failure_probability,
+        latency_seconds=latency,
+    )
+    state.prediction_logger.log(request, response)
+
+    return response
 
 
 @app.post("/predict", response_model=PredictionResponse)
@@ -107,3 +124,8 @@ def health() -> HealthResponse:
         model_backend=state.model_backend,
         datasource_reachable=datasource_reachable,
     )
+
+
+@app.get("/metrics")
+def metrics() -> Response:
+    return Response(content=render_latest(), media_type=CONTENT_TYPE_LATEST)
