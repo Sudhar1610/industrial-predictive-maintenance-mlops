@@ -101,6 +101,35 @@ and restart any process that reads `alerting_config.yaml` — no code or
 YAML structure change needed, since the URL is interpolated from the
 environment at load time.
 
+## Data and model-weight versioning (DVC, local remote)
+
+`data/raw` is DVC-tracked (`data/raw.dvc`), backed by a local remote at
+`dvc-storage/` (configured in `.dvc/config`, no cloud remote per ADR
+0001). After `make data` downloads a new dataset version:
+```bash
+dvc add data/raw
+git add data/raw.dvc
+git commit -m "Update reference dataset"
+dvc push          # copies the new content-addressed blobs into dvc-storage/
+```
+On a fresh clone (or Stage 2/3 handoff where `data/raw` isn't already
+populated):
+```bash
+dvc pull
+```
+This restores the exact tracked file content from `dvc-storage/` — no
+network access needed since it's a local path, not a cloud remote.
+
+The same pattern applies to model weights when you want a promoted
+Production artifact versioned outside MLflow's own store (e.g. for an
+extra audit trail):
+```bash
+dvc add artifacts/production_model
+git add artifacts/production_model.dvc
+git commit -m "Version Production model artifact"
+dvc push
+```
+
 ## Re-downloading the reference dataset
 
 ```bash
