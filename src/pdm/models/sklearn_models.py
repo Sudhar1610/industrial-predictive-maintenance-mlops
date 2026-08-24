@@ -77,7 +77,7 @@ class SklearnRfModel(Model):
         )
 
     @classmethod
-    def load(cls, path: Path) -> "SklearnRfModel":
+    def load(cls, path: Path) -> SklearnRfModel:
         metadata = json.loads((path / _METADATA_FILENAME).read_text())
         instance = cls(
             SklearnRfConfig(**metadata["params"]),

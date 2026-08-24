@@ -5,7 +5,9 @@ from __future__ import annotations
 import pandas as pd
 
 
-def add_lag_features(df: pd.DataFrame, sensor_columns: list[str], lag_steps: list[int]) -> pd.DataFrame:
+def add_lag_features(
+    df: pd.DataFrame, sensor_columns: list[str], lag_steps: list[int]
+) -> pd.DataFrame:
     """Add `{sensor}_lag_{n}` columns: the sensor's value `n` cycles
     earlier in the same unit's trajectory. Rows before a unit's `n`-th
     cycle have no history yet, so the lag is back-filled with that row's

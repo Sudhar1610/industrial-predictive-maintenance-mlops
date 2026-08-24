@@ -74,9 +74,7 @@ class TestThresholdTuning:
     def test_finds_reasonable_threshold_for_separable_data(self):
         rng = np.random.default_rng(0)
         y_true = np.array([0] * 100 + [1] * 100)
-        y_proba = np.concatenate(
-            [rng.uniform(0, 0.3, 100), rng.uniform(0.7, 1.0, 100)]
-        )
+        y_proba = np.concatenate([rng.uniform(0, 0.3, 100), rng.uniform(0.7, 1.0, 100)])
         threshold, score = find_best_threshold(y_true, y_proba, metric="f1")
         assert 0.3 < threshold < 0.7
         assert score > 0.95

@@ -73,7 +73,9 @@ class TestSqlDataSource:
         mock_read_sql.assert_called_once()
 
     @patch("pdm.data.sql_source.create_engine")
-    def test_health_check_returns_false_on_exception(self, mock_create_engine, sql_config: SqlSourceConfig):
+    def test_health_check_returns_false_on_exception(
+        self, mock_create_engine, sql_config: SqlSourceConfig
+    ):
         mock_engine = MagicMock()
         mock_engine.connect.side_effect = ConnectionError("down")
         mock_create_engine.return_value = mock_engine
@@ -105,7 +107,9 @@ class TestMongoDataSource:
         mock_db.__getitem__.assert_called_with(mongo_config.collection_training)
 
     @patch("pdm.data.mongo_source.MongoClient")
-    def test_health_check_returns_false_on_exception(self, mock_mongo_client, mongo_config: MongoSourceConfig):
+    def test_health_check_returns_false_on_exception(
+        self, mock_mongo_client, mongo_config: MongoSourceConfig
+    ):
         mock_db = MagicMock()
         mock_db.command.side_effect = ConnectionError("down")
         mock_client_instance = MagicMock()

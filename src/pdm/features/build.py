@@ -23,9 +23,7 @@ def build_features(df: pd.DataFrame, config: FeatureEngineeringConfig) -> pd.Dat
     """
     df = add_rolling_features(df, config.sensor_columns, config.rolling_windows)
     df = add_lag_features(df, config.sensor_columns, config.lag_steps)
-    df = add_degradation_slope_features(
-        df, config.sensor_columns, config.degradation_slope_window
-    )
+    df = add_degradation_slope_features(df, config.sensor_columns, config.degradation_slope_window)
     return df
 
 

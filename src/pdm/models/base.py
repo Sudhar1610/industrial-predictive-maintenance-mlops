@@ -60,7 +60,7 @@ class Model(ABC):
 
     @classmethod
     @abstractmethod
-    def load(cls, path: Path) -> "Model":
+    def load(cls, path: Path) -> Model:
         """Deserialize a model previously written by `save()`."""
         raise NotImplementedError
 

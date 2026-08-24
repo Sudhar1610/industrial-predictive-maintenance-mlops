@@ -62,7 +62,8 @@ def _load_yaml(filename: str) -> dict[str, Any]:
         )
     with path.open("r", encoding="utf-8") as f:
         raw = yaml.safe_load(f)
-    return _interpolate_env_vars(raw)
+    interpolated: dict[str, Any] = _interpolate_env_vars(raw)
+    return interpolated
 
 
 @lru_cache(maxsize=1)

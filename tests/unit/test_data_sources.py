@@ -32,7 +32,9 @@ def _csv_config(cmapss_csv_dir: Path) -> CsvSourceConfig:
 
 
 class TestCsvDataSource:
-    def test_fetch_training_data_shape(self, cmapss_csv_dir: Path, synthetic_cmapss_df: pd.DataFrame):
+    def test_fetch_training_data_shape(
+        self, cmapss_csv_dir: Path, synthetic_cmapss_df: pd.DataFrame
+    ):
         source = CsvDataSource(_csv_config(cmapss_csv_dir))
         df = source.fetch_training_data()
         assert list(df.columns) == CMAPSS_COLUMNS
@@ -110,7 +112,9 @@ class TestValidation:
         with pytest.raises(pandera.errors.SchemaError):
             validate_sensor_readings(bad)
 
-    def test_fail_on_violation_false_returns_data_unchanged(self, synthetic_cmapss_df: pd.DataFrame):
+    def test_fail_on_violation_false_returns_data_unchanged(
+        self, synthetic_cmapss_df: pd.DataFrame
+    ):
         dup = pd.concat([synthetic_cmapss_df, synthetic_cmapss_df.iloc[[0]]], ignore_index=True)
         result = validate_sensor_readings(dup, fail_on_violation=False)
         assert len(result) == len(dup)

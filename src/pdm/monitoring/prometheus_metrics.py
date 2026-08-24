@@ -8,7 +8,12 @@ up `multiprocess_mode` cleanly if needed.
 
 from __future__ import annotations
 
-from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Counter, Histogram, generate_latest
+from prometheus_client import (
+    CollectorRegistry,
+    Counter,
+    Histogram,
+    generate_latest,
+)
 
 REGISTRY = CollectorRegistry()
 
@@ -40,7 +45,9 @@ DRIFT_BREACHES_TOTAL = Counter(
 )
 
 
-def record_prediction(model_backend: str, will_fail: bool, failure_probability: float, latency_seconds: float) -> None:
+def record_prediction(
+    model_backend: str, will_fail: bool, failure_probability: float, latency_seconds: float
+) -> None:
     PREDICTIONS_TOTAL.labels(model_backend=model_backend, will_fail=str(will_fail)).inc()
     PREDICTION_LATENCY_SECONDS.labels(model_backend=model_backend).observe(latency_seconds)
     FAILURE_PROBABILITY.observe(failure_probability)

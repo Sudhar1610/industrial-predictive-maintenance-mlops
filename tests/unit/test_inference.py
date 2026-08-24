@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from pdm.config.schemas import ModelConfig
 from pdm.serving.inference import build_model_input, request_to_dataframe

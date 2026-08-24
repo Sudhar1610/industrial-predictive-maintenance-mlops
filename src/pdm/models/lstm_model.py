@@ -134,7 +134,7 @@ class LstmModel(Model):
         )
 
     @classmethod
-    def load(cls, path: Path) -> "LstmModel":
+    def load(cls, path: Path) -> LstmModel:
         metadata = json.loads((path / _METADATA_FILENAME).read_text())
         instance = cls(LstmConfig(**metadata["params"]))
         instance._n_features = metadata["n_features"]

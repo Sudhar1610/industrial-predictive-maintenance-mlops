@@ -15,6 +15,7 @@ format, so a model promoted here is also loadable there.
 
 from __future__ import annotations
 
+import re
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -30,6 +31,20 @@ from pdm.models.base import Model
 from pdm.models.factory import load_model
 
 _EXPERIMENT_NAME = "pdm_training"
+_SQLITE_URI_PATTERN = re.compile(r"^sqlite:///(?!//)(?P<path>.+)$")
+
+
+def _ensure_sqlite_parent_dir(tracking_uri: str) -> None:
+    """A sqlite backend can't create its own parent directory -- if
+    `mlflow/` doesn't exist yet (a fresh checkout, or Stage 3's first
+    boot), `MlflowClient(...)` fails with a cryptic "unable to open
+    database file" instead of creating it. Only handles the relative
+    `sqlite:///path/to.db` form used throughout this project's configs;
+    an absolute `sqlite:////path` or a non-sqlite URI is left alone.
+    """
+    match = _SQLITE_URI_PATTERN.match(tracking_uri)
+    if match:
+        Path(match.group("path")).parent.mkdir(parents=True, exist_ok=True)
 
 
 class MlflowModelRegistry:
@@ -38,6 +53,7 @@ class MlflowModelRegistry:
 
     def __init__(self, config: RegistryConfig) -> None:
         self._config = config
+        _ensure_sqlite_parent_dir(config.tracking_uri)
         mlflow.set_tracking_uri(config.tracking_uri)
         self._client = MlflowClient(tracking_uri=config.tracking_uri)
         self._experiment_id = self._ensure_experiment()
@@ -46,10 +62,12 @@ class MlflowModelRegistry:
     def _ensure_experiment(self) -> str:
         experiment = self._client.get_experiment_by_name(_EXPERIMENT_NAME)
         if experiment is not None:
-            return experiment.experiment_id
+            return str(experiment.experiment_id)
         artifact_location = str(Path(self._config.artifact_location).resolve())
         Path(artifact_location).mkdir(parents=True, exist_ok=True)
-        return self._client.create_experiment(_EXPERIMENT_NAME, artifact_location=artifact_location)
+        return str(
+            self._client.create_experiment(_EXPERIMENT_NAME, artifact_location=artifact_location)
+        )
 
     def _ensure_registered_model(self) -> None:
         try:
@@ -122,9 +140,7 @@ class MlflowModelRegistry:
         `pdm.registry.local_artifact.load_local_fallback` instead."""
         production = self.get_production_version()
         if production is None:
-            raise RuntimeError(
-                f"No Production version registered for '{self._config.model_name}'."
-            )
+            raise RuntimeError(f"No Production version registered for '{self._config.model_name}'.")
         local_path = mlflow.artifacts.download_artifacts(
             artifact_uri=f"models:/{self._config.model_name}/Production"
         )

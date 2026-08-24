@@ -1,0 +1,78 @@
+{
+  "title": "Predictive Maintenance - Serving Overview",
+  "uid": "pdm-serving-overview",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Predictions per second (by backend)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (model_backend) (rate(pdm_predictions_total[5m]))",
+          "legendFormat": "{{model_backend}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Predicted failure rate (will_fail=True share)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(pdm_predictions_total{will_fail=\"True\"}[15m])) / sum(rate(pdm_predictions_total[15m]))",
+          "legendFormat": "will_fail rate"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Prediction latency (p50 / p95)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(pdm_prediction_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(pdm_prediction_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Failure probability distribution",
+      "type": "heatmap",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "sum(increase(pdm_failure_probability_bucket[15m])) by (le)",
+          "format": "heatmap",
+          "legendFormat": "{{le}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Data drift breaches (cumulative)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 16 },
+      "targets": [{ "expr": "pdm_drift_breaches_total", "legendFormat": "drift breaches" }]
+    },
+    {
+      "id": 6,
+      "title": "Total predictions served",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 16 },
+      "targets": [{ "expr": "sum(pdm_predictions_total)", "legendFormat": "total predictions" }]
+    }
+  ]
+}

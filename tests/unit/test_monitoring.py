@@ -7,7 +7,6 @@ from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from pdm.alerting.base import AlertSeverity
 from pdm.config.schemas import (
@@ -20,7 +19,6 @@ from pdm.config.schemas import (
 from pdm.monitoring.drift_job import run_drift_check
 from pdm.monitoring.prediction_logger import PredictionLogger
 from pdm.monitoring.prometheus_metrics import (
-    FAILURE_PROBABILITY,
     PREDICTIONS_TOTAL,
     record_drift_breach,
     record_prediction,
@@ -29,7 +27,9 @@ from pdm.monitoring.prometheus_metrics import (
 from pdm.serving.schemas import PredictionResponse, PredictRequest, SensorReading
 
 
-def _request_response_pair(unit_id: int, sensor_1_value: float) -> tuple[PredictRequest, PredictionResponse]:
+def _request_response_pair(
+    unit_id: int, sensor_1_value: float
+) -> tuple[PredictRequest, PredictionResponse]:
     request = PredictRequest(
         unit_id=unit_id,
         history=[SensorReading(cycle=1, values={"sensor_1": sensor_1_value})],
@@ -75,12 +75,16 @@ class TestPredictionLogger:
 class TestPrometheusMetrics:
     def test_record_prediction_increments_counter(self):
         before = PREDICTIONS_TOTAL.labels(model_backend="xgboost", will_fail="False")._value.get()
-        record_prediction(model_backend="xgboost", will_fail=False, failure_probability=0.2, latency_seconds=0.01)
+        record_prediction(
+            model_backend="xgboost", will_fail=False, failure_probability=0.2, latency_seconds=0.01
+        )
         after = PREDICTIONS_TOTAL.labels(model_backend="xgboost", will_fail="False")._value.get()
         assert after == before + 1
 
     def test_render_latest_contains_metric_names(self):
-        record_prediction(model_backend="lstm", will_fail=True, failure_probability=0.9, latency_seconds=0.05)
+        record_prediction(
+            model_backend="lstm", will_fail=True, failure_probability=0.9, latency_seconds=0.05
+        )
         output = render_latest().decode("utf-8")
         assert "pdm_predictions_total" in output
         assert "pdm_prediction_latency_seconds" in output
@@ -126,7 +130,11 @@ class TestDriftJob:
 
         reference_df = pd.DataFrame({"sensor_1": [1.0] * 50, "sensor_2": [2.0] * 50})
         result = run_drift_check(
-            reference_df, self._feature_config(), self._alerting_config(), logger_, min_current_rows=30
+            reference_df,
+            self._feature_config(),
+            self._alerting_config(),
+            logger_,
+            min_current_rows=30,
         )
         assert result is None
 
@@ -140,13 +148,20 @@ class TestDriftJob:
                 history=[
                     SensorReading(
                         cycle=1,
-                        values={"sensor_1": float(rng.normal(50, 1)), "sensor_2": float(rng.normal(2, 1))},
+                        values={
+                            "sensor_1": float(rng.normal(50, 1)),
+                            "sensor_2": float(rng.normal(2, 1)),
+                        },
                     )
                 ],
             )
             response = PredictionResponse(
-                unit_id=i, cycle=1, failure_probability=0.1, will_fail=False,
-                remaining_useful_life=100.0, model_backend="xgboost",
+                unit_id=i,
+                cycle=1,
+                failure_probability=0.1,
+                will_fail=False,
+                remaining_useful_life=100.0,
+                model_backend="xgboost",
             )
             logger_.log(request, response)
 
@@ -157,7 +172,11 @@ class TestDriftJob:
         with patch("pdm.monitoring.drift_job.get_alerter") as mock_get_alerter:
             mock_alerter = mock_get_alerter.return_value
             result = run_drift_check(
-                reference_df, self._feature_config(), self._alerting_config(), logger_, min_current_rows=30
+                reference_df,
+                self._feature_config(),
+                self._alerting_config(),
+                logger_,
+                min_current_rows=30,
             )
 
         assert result is not None

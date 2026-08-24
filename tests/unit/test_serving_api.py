@@ -86,7 +86,9 @@ def _fit_and_install_model(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 class TestPredictEndpoint:
-    def test_predict_returns_expected_shape(self, client: TestClient, monkeypatch: pytest.MonkeyPatch):
+    def test_predict_returns_expected_shape(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ):
         _fit_and_install_model(monkeypatch)
         response = client.post("/predict", json=_history_payload())
         assert response.status_code == 200
@@ -101,14 +103,18 @@ class TestPredictEndpoint:
         response = client.post("/predict", json=_history_payload())
         assert response.status_code == 503
 
-    def test_predict_rejects_empty_history(self, client: TestClient, monkeypatch: pytest.MonkeyPatch):
+    def test_predict_rejects_empty_history(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ):
         _fit_and_install_model(monkeypatch)
         payload = _history_payload()
         payload["history"] = []
         response = client.post("/predict", json=payload)
         assert response.status_code == 422
 
-    def test_predict_rejects_missing_unit_id(self, client: TestClient, monkeypatch: pytest.MonkeyPatch):
+    def test_predict_rejects_missing_unit_id(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ):
         _fit_and_install_model(monkeypatch)
         payload = _history_payload()
         del payload["unit_id"]
@@ -117,7 +123,9 @@ class TestPredictEndpoint:
 
 
 class TestPredictBatchEndpoint:
-    def test_batch_returns_one_prediction_per_unit(self, client: TestClient, monkeypatch: pytest.MonkeyPatch):
+    def test_batch_returns_one_prediction_per_unit(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ):
         _fit_and_install_model(monkeypatch)
         payload = {"units": [_history_payload(), _history_payload()]}
         response = client.post("/predict-batch", json=payload)

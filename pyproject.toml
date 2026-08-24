@@ -65,7 +65,11 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "N"]
-ignore = ["E501"]
+# E501: line length is handled by the formatter, not the linter.
+# N806/N803: `X`/`X_train` etc. for feature matrices is the standard
+# sklearn/numpy convention used throughout this codebase's ML code, not
+# a naming mistake.
+ignore = ["E501", "N806", "N803"]
 
 [tool.mypy]
 python_version = "3.11"

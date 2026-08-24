@@ -1,0 +1,12 @@
+# Auto-loads monitoring/grafana/dashboards/*.json on container start.
+apiVersion: 1
+
+providers:
+  - name: pdm
+    orgId: 1
+    folder: ""
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards

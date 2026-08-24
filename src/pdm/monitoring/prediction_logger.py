@@ -9,7 +9,7 @@ or the fully offline IIOT server.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -28,7 +28,7 @@ class PredictionLogger:
         """Append one record combining the request's latest sensor
         reading with the model's output for it."""
         record = {
-            "logged_at": datetime.now(timezone.utc).isoformat(),
+            "logged_at": datetime.now(UTC).isoformat(),
             "unit_id": response.unit_id,
             "cycle": response.cycle,
             "failure_probability": response.failure_probability,
@@ -46,7 +46,9 @@ class PredictionLogger:
         nothing has been logged yet."""
         if not self._log_path.exists():
             return pd.DataFrame()
-        lines = [line for line in self._log_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        lines = [
+            line for line in self._log_path.read_text(encoding="utf-8").splitlines() if line.strip()
+        ]
         if not lines:
             return pd.DataFrame()
         records = [json.loads(line) for line in lines]

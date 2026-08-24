@@ -100,12 +100,12 @@ class TestTrainingFlowEndToEnd:
         assert version == "1"
 
         registry = MlflowModelRegistry(_patch_config.registry)
-        model_version = registry._client.get_model_version(_patch_config.registry.model_name, version)
+        model_version = registry._client.get_model_version(
+            _patch_config.registry.model_name, version
+        )
         assert model_version.current_stage == "Staging"
 
-    def test_flow_logs_both_classification_and_regression_metrics(
-        self, _patch_config: ModelConfig
-    ):
+    def test_flow_logs_both_classification_and_regression_metrics(self, _patch_config: ModelConfig):
         version = training_flow()
         registry = MlflowModelRegistry(_patch_config.registry)
         metrics = registry.get_version_metrics(version)

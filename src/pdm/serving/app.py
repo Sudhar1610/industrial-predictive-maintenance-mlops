@@ -9,16 +9,18 @@ module docstring convention described in the project README.
 from __future__ import annotations
 
 import time
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Response
 from loguru import logger
+from prometheus_client import CONTENT_TYPE_LATEST
 
 from pdm.config import settings
 from pdm.data.factory import get_datasource
 from pdm.models.base import Model
 from pdm.monitoring.prediction_logger import PredictionLogger
-from pdm.monitoring.prometheus_metrics import CONTENT_TYPE_LATEST, record_prediction, render_latest
+from pdm.monitoring.prometheus_metrics import record_prediction, render_latest
 from pdm.serving.inference import build_model_input
 from pdm.serving.model_loader import load_production_model
 from pdm.serving.schemas import (
@@ -43,7 +45,7 @@ state = _AppState()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     model_config = settings.get_model_config()
     state.model = load_production_model(model_config)
     state.model_backend = model_config.active_model

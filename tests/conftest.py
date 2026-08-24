@@ -56,7 +56,7 @@ def cmapss_csv_dir(tmp_path: Path, synthetic_cmapss_df: pd.DataFrame) -> Path:
     # Build a matching, truncated "test" set + RUL labels.
     test_frames = []
     ruls = []
-    for uid, group in synthetic_cmapss_df.groupby("unit_id"):
+    for _uid, group in synthetic_cmapss_df.groupby("unit_id"):
         truncated = group.iloc[: max(1, len(group) - 10)]
         test_frames.append(truncated)
         ruls.append(len(group) - len(truncated))

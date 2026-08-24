@@ -84,9 +84,7 @@ class TestXgboostModel:
         loaded = XgboostModel.load(tmp_path)
         after = loaded.predict(X)
 
-        np.testing.assert_allclose(
-            before.failure_probability, after.failure_probability, rtol=1e-5
-        )
+        np.testing.assert_allclose(before.failure_probability, after.failure_probability, rtol=1e-5)
 
 
 class TestLstmModel:
@@ -116,9 +114,7 @@ class TestLstmModel:
         loaded = LstmModel.load(tmp_path)
         after = loaded.predict(X)
 
-        np.testing.assert_allclose(
-            before.failure_probability, after.failure_probability, rtol=1e-5
-        )
+        np.testing.assert_allclose(before.failure_probability, after.failure_probability, rtol=1e-5)
 
 
 class TestModelFactory:

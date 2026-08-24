@@ -48,7 +48,9 @@ class TestLocalArtifactFallback:
     def test_not_exists_before_save(self, registry_config: RegistryConfig):
         assert local_fallback_exists(registry_config) is False
 
-    def test_save_then_load_roundtrip(self, trained_model: SklearnRfModel, registry_config: RegistryConfig):
+    def test_save_then_load_roundtrip(
+        self, trained_model: SklearnRfModel, registry_config: RegistryConfig
+    ):
         save_local_fallback(trained_model, registry_config)
         assert local_fallback_exists(registry_config) is True
 
@@ -67,6 +69,22 @@ class TestMlflowModelRegistry:
     def test_creates_registered_model_on_init(self, registry_config: RegistryConfig):
         registry = MlflowModelRegistry(registry_config)
         assert registry._client.get_registered_model(registry_config.model_name) is not None
+
+    def test_works_when_sqlite_parent_dir_does_not_exist_yet(self, tmp_path: Path):
+        # Regression test: a fresh checkout has no mlflow/ directory at
+        # all (it's gitignored). sqlite can't create its own parent dir,
+        # so MlflowModelRegistry must create it first -- this reproduces
+        # that exact "unable to open database file" failure mode.
+        nested = tmp_path / "does" / "not" / "exist" / "mlflow.db"
+        assert not nested.parent.exists()
+        config = RegistryConfig(
+            tracking_uri=f"sqlite:///{nested}",
+            artifact_location=str(tmp_path / "artifacts"),
+            model_name="fresh_checkout_model",
+            local_fallback_path=str(tmp_path / "fallback"),
+        )
+        registry = MlflowModelRegistry(config)
+        assert registry._client.get_registered_model(config.model_name) is not None
 
     def test_log_training_run_registers_version(
         self, trained_model: SklearnRfModel, registry_config: RegistryConfig

@@ -10,7 +10,7 @@ from __future__ import annotations
 from loguru import logger
 
 from pdm.alerting.base import Alert, Alerter, AlertSeverity
-from pdm.config.schemas import ConsoleAlertConfig, SEVERITY_ORDER
+from pdm.config.schemas import SEVERITY_ORDER, ConsoleAlertConfig
 
 _LOG_FUNCS = {
     AlertSeverity.INFO: logger.info,

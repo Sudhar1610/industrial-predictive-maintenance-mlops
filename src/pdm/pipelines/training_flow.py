@@ -99,13 +99,18 @@ def train_model(train_df: pd.DataFrame, model_config: ModelConfig) -> Model:
     model = get_model(model_config)
     model.fit(X, y_class, y_reg)
     logger.info(
-        "Trained {} on {} samples ({} feature dims).", model_config.active_model, len(X), X.shape[-1]
+        "Trained {} on {} samples ({} feature dims).",
+        model_config.active_model,
+        len(X),
+        X.shape[-1],
     )
     return model
 
 
 @task(name="evaluate_model")
-def evaluate_model(model: Model, test_df: pd.DataFrame, model_config: ModelConfig) -> dict[str, float]:
+def evaluate_model(
+    model: Model, test_df: pd.DataFrame, model_config: ModelConfig
+) -> dict[str, float]:
     X, y_class, y_reg = _to_model_arrays(test_df, model_config)
     result = model.predict(X)
     metrics = {

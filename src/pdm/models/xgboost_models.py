@@ -81,7 +81,7 @@ class XgboostModel(Model):
         )
 
     @classmethod
-    def load(cls, path: Path) -> "XgboostModel":
+    def load(cls, path: Path) -> XgboostModel:
         metadata = json.loads((path / _METADATA_FILENAME).read_text())
         instance = cls(
             XgboostConfig(**metadata["params"]),

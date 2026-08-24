@@ -38,9 +38,7 @@ def add_degradation_slope_features(
 
     new_columns: dict[str, pd.Series] = {}
     for col in sensor_columns:
-        slope = grouped[col].rolling(window=window, min_periods=2).apply(
-            _rolling_slope, raw=True
-        )
+        slope = grouped[col].rolling(window=window, min_periods=2).apply(_rolling_slope, raw=True)
         new_columns[f"{col}_slope_{window}"] = slope.reset_index(level=0, drop=True).fillna(0.0)
 
     return pd.concat([df, pd.DataFrame(new_columns, index=df.index)], axis=1)
