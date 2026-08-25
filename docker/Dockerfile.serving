@@ -1,0 +1,40 @@
+# API-only image: runs the FastAPI inference service. Expects a trained
+# model to be reachable at container start, either via the MLflow
+# registry (mount ./mlflow into /app/mlflow) or the local fallback
+# artifact (mount ./artifacts into /app/artifacts) -- see
+# docker/docker-compose.yml's `api` service and docs/runbook.md.
+# syntax=docker/dockerfile:1
+
+FROM python:3.11-slim AS builder
+
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY pyproject.toml ./
+COPY src ./src
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir ".[sql]"
+
+FROM python:3.11-slim AS runtime
+
+RUN groupadd -r pdm && useradd -r -g pdm -d /app pdm
+WORKDIR /app
+
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+COPY src ./src
+COPY configs ./configs
+
+ENV PYTHONPATH=/app/src \
+    PYTHONUNBUFFERED=1
+
+RUN mkdir -p /app/mlflow /app/artifacts /app/logs && chown -R pdm:pdm /app
+USER pdm
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD python -c "import urllib.request,sys; r=urllib.request.urlopen('http://localhost:8000/health',timeout=3); sys.exit(0 if r.status==200 else 1)"
+
+CMD ["uvicorn", "pdm.serving.app:app", "--host", "0.0.0.0", "--port", "8000"]

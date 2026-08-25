@@ -1,0 +1,26 @@
+# Alerting configuration.
+#
+# `active_channel` is the ONLY field that changes when promoting from
+# Stage 1 (console) to Stage 2/3 (MS Teams webhook). Application code
+# only ever talks to the `Alerter` interface (see src/pdm/alerting/base.py).
+
+active_channel: console # console | teams_webhook
+
+console:
+  min_severity: "info" # info | warning | critical
+
+teams_webhook:
+  webhook_url: "${TEAMS_WEBHOOK_URL}"
+  min_severity: "warning"
+  card_theme_color: "FF0000"
+  timeout_s: 5
+  retry_attempts: 2
+
+# Conditions that trigger an alert, evaluated by monitoring/ and
+# serving/ code. These thresholds are business logic, not stage-specific,
+# so they stay constant across all three stages.
+triggers:
+  drift_breach: true
+  failure_probability_threshold: 0.8
+  rul_below_cycles: 15
+  model_health_check_failure: true

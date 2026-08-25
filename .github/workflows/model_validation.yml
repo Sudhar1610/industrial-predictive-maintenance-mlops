@@ -1,0 +1,82 @@
+name: Model Validation & Serving Integration Test
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch: {}
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  train-validate-and-serve:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install project
+        run: pip install -e ".[dev,sql]"
+
+      - name: Download C-MAPSS sample dataset
+        run: python scripts/download_data.py
+
+      - name: Run training pipeline (ingest -> validate -> feature -> train -> evaluate -> register)
+        run: python -m pdm.pipelines.training_flow
+
+      - name: Model-validation gate (blocks promotion on regression)
+        run: python scripts/validate_and_promote_model.py
+
+      - name: Build serving image
+        run: docker build -f docker/Dockerfile.serving -t pdm-serving:ci .
+
+      - name: Run serving container against the model produced above
+        run: |
+          docker run -d --name pdm-api -p 8000:8000 \
+            -v "${{ github.workspace }}/mlflow:/app/mlflow" \
+            -v "${{ github.workspace }}/artifacts:/app/artifacts" \
+            -v "${{ github.workspace }}/configs:/app/configs:ro" \
+            pdm-serving:ci
+
+      - name: Wait for the API to become healthy
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/health; then
+              echo "API is healthy."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API did not become healthy in time." >&2
+          docker logs pdm-api
+          exit 1
+
+      - name: Integration test - /predict
+        run: |
+          curl -sf -X POST http://localhost:8000/predict \
+            -H "Content-Type: application/json" \
+            -d @tests/fixtures/sample_predict_request.json | tee /tmp/predict_response.json
+          python -c "
+          import json
+          body = json.load(open('/tmp/predict_response.json'))
+          assert 0.0 <= body['failure_probability'] <= 1.0, body
+          assert isinstance(body['will_fail'], bool), body
+          assert body['remaining_useful_life'] >= 0, body
+          print('predict response shape OK:', body)
+          "
+
+      - name: Integration test - /metrics exposes Prometheus format
+        run: curl -sf http://localhost:8000/metrics | grep -q "pdm_predictions_total"
+
+      - name: Container logs (on failure)
+        if: failure()
+        run: docker logs pdm-api || true
+
+      - name: Stop container
+        if: always()
+        run: docker rm -f pdm-api || true

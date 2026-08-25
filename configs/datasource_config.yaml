@@ -1,0 +1,69 @@
+# Datasource configuration.
+#
+# `active_source` is the ONLY field that changes when promoting this
+# project from Stage 1 (dev, local CSV) to Stage 2 (office PWS, real
+# SQL/MongoDB) or Stage 3 (IIOT server, real SQL/MongoDB, fully offline).
+# Application code never branches on stage; it only ever talks to the
+# `DataSource` interface (see src/pdm/data/base.py). Credentials are never
+# hardcoded here -- they are interpolated from environment variables at
+# load time by src/pdm/config/settings.py.
+
+active_source: csv # csv | sql | mongodb
+
+csv:
+  train_path: "data/raw/train_FD001.txt"
+  test_path: "data/raw/test_FD001.txt"
+  rul_path: "data/raw/RUL_FD001.txt"
+  # C-MAPSS FD001 has no header row; columns are fixed by the dataset spec.
+  column_names:
+    - unit_id
+    - cycle
+    - op_setting_1
+    - op_setting_2
+    - op_setting_3
+    - sensor_1
+    - sensor_2
+    - sensor_3
+    - sensor_4
+    - sensor_5
+    - sensor_6
+    - sensor_7
+    - sensor_8
+    - sensor_9
+    - sensor_10
+    - sensor_11
+    - sensor_12
+    - sensor_13
+    - sensor_14
+    - sensor_15
+    - sensor_16
+    - sensor_17
+    - sensor_18
+    - sensor_19
+    - sensor_20
+    - sensor_21
+
+sql:
+  # Stage 2/3: office SQL Server or Postgres holding real machine telemetry.
+  driver: "mssql+pyodbc" # SQLAlchemy driver string, e.g. postgresql+psycopg2
+  host: "${SQL_HOST}"
+  port: 1433
+  database: "${SQL_DB}"
+  username: "${SQL_USER}"
+  password: "${SQL_PASSWORD}"
+  odbc_driver: "ODBC Driver 17 for SQL Server"
+  query_training: "SELECT * FROM dbo.sensor_readings_history ORDER BY unit_id, cycle"
+  query_latest: "SELECT * FROM dbo.sensor_readings_latest WHERE unit_id = :unit_id"
+  connection_timeout_s: 10
+
+mongodb:
+  # Stage 2/3: office/plant MongoDB holding streaming telemetry documents.
+  uri: "${MONGO_URI}"
+  database: "machine_telemetry"
+  collection_training: "sensor_history"
+  collection_latest: "sensor_stream"
+  connection_timeout_ms: 5000
+
+validation:
+  fail_on_violation: true
+  min_rows_expected: 1
