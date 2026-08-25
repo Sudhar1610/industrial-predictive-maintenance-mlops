@@ -70,3 +70,21 @@ registry first and falls back to this path automatically.
 - No built-in UI/dashboard without manually running the optional
   `mlflow-ui` compose service — acceptable since this project's serving
   and CI paths never depend on that UI being up.
+- **MLflow's local artifact store always records an ABSOLUTE filesystem
+  path at experiment-creation time**, even when given a relative one —
+  confirmed by direct testing, not assumed. This is invisible as long as
+  every reader shares the training process's absolute filesystem root,
+  but it broke exactly as expected the first time `mlflow/` was
+  bind-mounted into a Docker container at a different absolute path
+  (`/app/mlflow` vs. the CI runner's `/home/runner/work/...`) — the
+  serving container's MLflow client failed with "No such file or
+  directory" trying to resolve an artifact URI baked in at training
+  time. This is precisely the scenario `pdm.registry.local_artifact`
+  was already built for, so the fix was to make `scripts/
+  validate_and_promote_model.py` mirror every Production promotion to
+  the local-fallback path immediately (not just document that the
+  fallback exists) — `pdm.serving.model_loader` then recovers
+  automatically when the MLflow path's absolute-path assumption breaks.
+  Verified by training in one temp directory, copying `mlflow/` +
+  `artifacts/` to a completely different absolute path, and confirming
+  `load_production_model()` still succeeds from there.

@@ -23,6 +23,8 @@ import sys
 from loguru import logger
 
 from pdm.config import settings
+from pdm.config.schemas import ModelConfig
+from pdm.registry.local_artifact import save_local_fallback
 from pdm.registry.mlflow_registry import MlflowModelRegistry
 
 # Metrics where higher is better vs where lower is better -- needed to
@@ -39,6 +41,29 @@ def _regressed(metric_name: str, candidate: float, baseline: float, tolerance: f
     raise ValueError(
         f"Unknown guardrail metric {metric_name!r}; add it to _HIGHER_IS_BETTER or _LOWER_IS_BETTER."
     )
+
+
+def _promote(registry: MlflowModelRegistry, version: str, model_config: ModelConfig) -> None:
+    """Transition `version` to Production in the MLflow registry, then
+    immediately mirror it to the local-fallback artifact path.
+
+    Why this matters: MLflow's local artifact store always records an
+    ABSOLUTE filesystem path at experiment-creation time, even if given a
+    relative one. That's fine as long as every reader shares the same
+    absolute filesystem root as the writer -- but it breaks the moment
+    the same `mlflow/` directory is bind-mounted into a Docker container
+    at a different absolute path (e.g. training on a CI runner at
+    `/home/runner/work/...`, then serving from `/app/mlflow` inside the
+    container). This script runs on the SAME host/path as training, so
+    `load_production_model()` here still resolves correctly; saving that
+    loaded model to `local_fallback_path` right now is what lets
+    `pdm.serving.model_loader` recover via its local-artifact fallback
+    when the MLflow path later fails to resolve from a different root.
+    """
+    registry.transition_stage(version, "Production")
+    model = registry.load_production_model()
+    save_local_fallback(model, model_config.registry)
+    logger.info("Mirrored Production version {} to local fallback artifact.", version)
 
 
 def validate_and_promote(tolerance: float = 0.02) -> int:
@@ -59,7 +84,7 @@ def validate_and_promote(tolerance: float = 0.02) -> int:
     production = registry.get_production_version()
     if production is None:
         logger.info("No existing Production version; promoting version {}.", candidate_version)
-        registry.transition_stage(candidate_version, "Production")
+        _promote(registry, candidate_version, model_config)
         return 0
 
     baseline_metrics = registry.get_version_metrics(str(production.version))
@@ -91,7 +116,7 @@ def validate_and_promote(tolerance: float = 0.02) -> int:
         candidate_value,
         baseline_value,
     )
-    registry.transition_stage(candidate_version, "Production")
+    _promote(registry, candidate_version, model_config)
     return 0
 
 

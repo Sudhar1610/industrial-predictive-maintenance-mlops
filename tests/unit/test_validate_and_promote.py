@@ -14,6 +14,7 @@ from validate_and_promote_model import _regressed, validate_and_promote  # noqa:
 from pdm.config import settings
 from pdm.config.schemas import ModelConfig, RegistryConfig, SklearnRfConfig
 from pdm.models.sklearn_models import SklearnRfModel
+from pdm.registry.local_artifact import local_fallback_exists
 from pdm.registry.mlflow_registry import MlflowModelRegistry
 
 
@@ -98,6 +99,29 @@ class TestValidateAndPromote:
         production = registry.get_production_version()
         assert production is not None
         assert str(production.version) == version
+
+    def test_promotion_mirrors_to_local_fallback(
+        self,
+        trained_model: SklearnRfModel,
+        model_config: ModelConfig,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        """Regression test: promoting to Production must also populate
+        the local-fallback artifact, because MLflow's local artifact
+        store bakes in an ABSOLUTE filesystem path at experiment-creation
+        time -- which breaks the moment the same `mlflow/` directory is
+        read from a different absolute root (e.g. a Docker container
+        bind-mounting it at `/app/mlflow` instead of the host's path).
+        Without this mirroring step, serving falls back to local_artifact
+        only to find nothing there either, and refuses to start."""
+        monkeypatch.setattr(settings, "get_model_config", lambda: model_config)
+        registry = MlflowModelRegistry(model_config.registry)
+        version = registry.log_training_run(trained_model, params={}, metrics={"f1": 0.85})
+        registry.transition_stage(version, "Staging")
+
+        assert local_fallback_exists(model_config.registry) is False
+        assert validate_and_promote() == 0
+        assert local_fallback_exists(model_config.registry) is True
 
     def test_blocks_when_candidate_regresses(
         self,
