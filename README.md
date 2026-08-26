@@ -1,5 +1,10 @@
 # Industrial Predictive Maintenance — MLOps Platform
 
+[![CI](https://github.com/Sudhar1610/Hello-world/actions/workflows/ci.yml/badge.svg)](https://github.com/Sudhar1610/Hello-world/actions/workflows/ci.yml)
+[![Model Validation](https://github.com/Sudhar1610/Hello-world/actions/workflows/model_validation.yml/badge.svg)](https://github.com/Sudhar1610/Hello-world/actions/workflows/model_validation.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](pyproject.toml)
+
 An end-to-end predictive maintenance system for industrial turbofan
 assets: two model heads (binary failure classification + remaining
 useful life regression) trained on multivariate sensor time-series,
@@ -196,3 +201,4 @@ docs/            architecture, stage-promotion guide, AWS migration map, ADRs
 - [`docs/runbook.md`](docs/runbook.md) — operating the system day-to-day
 - [`docs/adr/`](docs/adr/) — architecture decision records
 - [`PROJECT_NOTES.md`](PROJECT_NOTES.md) — current deployment stage
+- [`LICENSE`](LICENSE) — MIT
