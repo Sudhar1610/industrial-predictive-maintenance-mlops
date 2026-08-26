@@ -1,7 +1,7 @@
 # Industrial Predictive Maintenance — MLOps Platform
 
-[![CI](https://github.com/Sudhar1610/Hello-world/actions/workflows/ci.yml/badge.svg)](https://github.com/Sudhar1610/Hello-world/actions/workflows/ci.yml)
-[![Model Validation](https://github.com/Sudhar1610/Hello-world/actions/workflows/model_validation.yml/badge.svg)](https://github.com/Sudhar1610/Hello-world/actions/workflows/model_validation.yml)
+[![CI](https://github.com/Sudhar1610/industrial-predictive-maintenance-mlops/actions/workflows/ci.yml/badge.svg)](https://github.com/Sudhar1610/industrial-predictive-maintenance-mlops/actions/workflows/ci.yml)
+[![Model Validation](https://github.com/Sudhar1610/industrial-predictive-maintenance-mlops/actions/workflows/model_validation.yml/badge.svg)](https://github.com/Sudhar1610/industrial-predictive-maintenance-mlops/actions/workflows/model_validation.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](pyproject.toml)
 
